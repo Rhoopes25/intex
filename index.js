@@ -45,14 +45,15 @@ app.use(express.urlencoded({ extended: true }));
 const db = knex({
     client: "pg",
     connection: {
-        host: process.env.RDS_HOSTNAME || "localhost",
-        user: process.env.RDS_USERNAME || "postgres",
-        password: process.env.RDS_PASSWORD || "admin",
-        database: process.env.RDS_DB_NAME || "assignment3",
-        port: Number(process.env.RDS_PORT) || 5432,
-        ssl: process.env.DB_SSL ? { rejectUnauthorized: false } : false
+        host: process.env.RDS_HOSTNAME,
+        user: process.env.RDS_USERNAME,
+        password: process.env.RDS_PASSWORD,
+        database: process.env.RDS_DB_NAME,
+        port: Number(process.env.RDS_PORT),
+        ssl: false // AWS RDS doesn't require SSL when in same VPC
     },
 });
+
 
 // Helper function to protect pages
 // Checks if a user is logged in before letting them access certain routes
@@ -69,6 +70,7 @@ app.get("/", (req, res) => {
     // res.render() = “take a template + data → make HTML → send it to the browser.”
     res.render("test", { error_message: "" });
 });
+
 
 
 // START THE SERVER
