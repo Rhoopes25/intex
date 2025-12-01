@@ -65,11 +65,16 @@ function requireLogin(req, res, next) {
 }
 
 // Home / Login page
-app.get("/", (req, res) => {
-    // Pass a blank error_message so EJS has something to read
-    // res.render() = “take a template + data → make HTML → send it to the browser.”
-    res.render("test", { error_message: "" });
+app.get("/", async(req, res) => {
+    try {
+        const rows = await db.select("*").from("test_table");
+        res.render("test", { rows });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("DB error: " + err.message);
+    }
 });
+
 
 
 

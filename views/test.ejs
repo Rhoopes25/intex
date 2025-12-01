@@ -8,9 +8,21 @@
 </head>
 
 <body>
-    <h1>TEST</h1>
+    <h1>TEST PAGE</h1>
 
-    // show data here
+    <h2>Data from PostgreSQL:</h2>
+
+    <ul>
+        <% if (rows && rows.length > 0) { %>
+            <% rows.forEach(row => { %>
+                <li><strong><%= row.name %></strong>:
+                    <%= row.message %>
+                </li>
+                <% }); %>
+                    <% } else { %>
+                        <li>No data found.</li>
+                        <% } %>
+    </ul>
 
 </body>
 
