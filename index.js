@@ -47,7 +47,7 @@ const db = knex({
     connection: {
         host: process.env.RDS_HOSTNAME,
         user: process.env.RDS_USERNAME,
-        password: process.env.RDS_PASSWORD,
+        password: process.env.RDS_PASSWORD | admin,
         database: process.env.RDS_DB_NAME,
         port: Number(process.env.RDS_PORT),
         ssl: false // AWS RDS doesn't require SSL when in same VPC
