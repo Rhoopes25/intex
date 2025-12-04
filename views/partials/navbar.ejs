@@ -1,0 +1,75 @@
+<nav class="navbar navbar-expand-lg navbar-ligh fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <img src="/smalllogo.png" alt="Ella Rises Logo">
+            Ella Rises
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/events">Events</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/donate">Donate</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="moreDropdown" role="button" data-bs-toggle="dropdown">
+                        More
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/donations">Donations</a></li>
+                        <li><a class="dropdown-item" href="/milestones">Milestones</a></li>
+                        <li><a class="dropdown-item" href="/dashboard">Dashboard</a></li>
+                    </ul>
+                </li>
+                <% if (user) { %>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="fromYouDropdown" role="button" data-bs-toggle="dropdown">
+                            From You
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/userSurveys">Your Surveys</a></li>
+                            <li><a class="dropdown-item" href="/userMilestones">Your Milestones</a></li>
+                        </ul>
+                    </li>
+                    <% if (user.role === 'M') { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="managingDropdown" role="button" data-bs-toggle="dropdown">
+                                Managing
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/surveys">Surveys</a></li>
+                                <li><a class="dropdown-item" href="/milestones">Milestones</a></li>
+                                <li><a class="dropdown-item" href="/donations">Donations</a></li>
+                                <li><a class="dropdown-item" href="/managerEvents">Events</a></li>
+                                <li><a class="dropdown-item" href="/registrations">Registrations</a></li>
+                                <li><a class="dropdown-item" href="/participants">Participants</a></li>
+                                <li><a class="dropdown-item" href="/users">Users</a></li>
+                            </ul>
+                        </li>
+                    <% } %>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/profile">Profile</a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <a class="btn btn-primary btn-custom" href="/logout">Logout</a>
+                    </li>
+                <% } else { %>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <a class="btn btn-primary btn-custom" href="/createProfile">Sign Up</a>
+                    </li>
+                <% } %>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div style="height: 87px;"></div>

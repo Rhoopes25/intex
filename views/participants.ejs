@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participants - Ella Rises</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <img src="/butterfly.jpg" alt="" class="floating-clipart butterfly-1">
+    <img src="/flower2.jpg" alt="" class="floating-clipart flower-hero-left">
+    <img src="/flower3.jpg" alt="" class="floating-clipart flower-hero-right">
+
+    <div class="page-header">
+        <div class="container">
+            <h1><i class="fas fa-users me-3"></i>Participants</h1>
+            <p>Manage all program participants</p>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-list me-2"></i>All Participants</span>
+                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addParticipantModal">
+                    <i class="fas fa-plus me-2"></i>Add Participant
+                </button>
+            </div>
+            <div class="card-body">
+                <% if (success === 'deleted') { %>
+                    <div class="alert alert-success">
+                        Participant deleted successfully.
+                    </div>
+                <% } %>
+
+                <% if (participants.length === 0) { %>
+                    <div class="text-center py-5">
+                        <i class="fas fa-users" style="font-size: 4rem; color: var(--text-light);"></i>
+                        <h4 class="mt-3">No participants yet</h4>
+                        <p class="text-muted">Participants will appear here as they register</p>
+                    </div>
+                <% } else { %>
+
+                    <!-- Search Bar -->
+                    <div class="mb-3">
+                        <input type="text" id="participantSearch" class="form-control" placeholder="Search participants...">
+                    </div>
+                    <% if (success === 'added') { %>
+                        <div class="alert alert-success">
+                            Participant added successfully.
+                        </div>
+                    <% } %>
+                    
+                    <% if (success === 'error') { %>
+                        <div class="alert alert-danger">
+                            Cannot add that participant.
+                        </div>
+                    <% } %>
+                    
+                    <% if (success === 'errorPhone') { %>
+                        <div class="alert alert-danger">
+                            Phone number must contain exactly 10 digits.
+                        </div>
+                    <% } %>
+                    
+
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="participantsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>DOB</th>
+                                    <th>City</th>
+                                    <th>State</th>
+                                    <th>ZIP</th>
+                                    <th>School/Employer</th>
+                                    <th>Field of Interest</th>
+                                    <th>Total Donations</th>
+                                    <th>Role</th>
+                                    <th>Milestones</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% participants.forEach(participant => { %>
+                                    <tr>
+                                        <td><%= participant.participantfirstname %> <%= participant.participantlastname %></td>
+                                        <td><%= participant.participantemail %></td>
+                                        <td>
+                                            <% if (participant.participantphone) { 
+                                                const p = participant.participantphone;
+                                                const formatted = p.length === 10
+                                                    ? `(${p.substring(0,3)}) ${p.substring(3,6)}-${p.substring(6)}`
+                                                    : p;
+                                            %>
+                                                <%= formatted %>
+                                            <% } else { %>
+                                                N/A
+                                            <% } %>
+                                        </td>
+                                        <td><%= participant.formattedDob || 'N/A' %></td>
+                                        <td><%= participant.participantcity || 'N/A' %></td>
+                                        <td><%= participant.participantstate || 'N/A' %></td>
+                                        <td><%= participant.participantzip || 'N/A' %></td>
+                                        <td><%= participant.participantschooloremployer || 'N/A' %></td>
+                                        <td><%= participant.participantfieldofinterest || 'N/A' %></td>
+                                        <td>$<%= parseFloat(participant.totaldonations || 0).toFixed(2) %></td>
+                                        <td><%= participant.participantrole.charAt(0).toUpperCase() + participant.participantrole.slice(1) %></td>
+                                        <td>
+                                            <a href="/milestones?search=<%= encodeURIComponent(participant.participantfirstname + ' ' + participant.participantlastname) %>"
+                                               class="btn btn-sm btn-primary me-2"
+                                               title="View Milestones">
+                                                <i class="fas fa-trophy"></i>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#editParticipantModal<%= participant.participantid %>">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <form method="POST" action="/participants/delete/<%= participant.participantid %>" style="display: inline;">
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure? This will delete all associated data.')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Edit Participant Modal -->
+                                    <div class="modal fade" id="editParticipantModal<%= participant.participantid %>" tabindex="-1">
+                                        <div class="modal-dialog modal-md">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Edit Participant</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form method="POST" action="/participants/edit/<%= participant.participantid %>">
+                                                    <div class="modal-body">
+                                                        <div class="row">
+                                                            <div class="col-md-6 mb-3">
+                                                                <label class="form-label">First Name *</label>
+                                                                <input type="text" class="form-control" name="firstname" value="<%= participant.participantfirstname %>" required>
+                                                            </div>
+                                                            <div class="col-md-6 mb-3">
+                                                                <label class="form-label">Last Name *</label>
+                                                                <input type="text" class="form-control" name="lastname" value="<%= participant.participantlastname %>" required>
+                                                            </div>
+                                                            <div class="col-md-6 mb-3">
+                                                                <label class="form-label">Email *</label>
+                                                                <input type="email" class="form-control" name="email" value="<%= participant.participantemail %>" required>
+                                                            </div>
+                                                            <div class="col-md-6 mb-3">
+                                                                <label class="form-label">Phone</label>
+                                                                <input 
+                                                                    type="tel" 
+                                                                    class="form-control phone-input" 
+                                                                    name="phone" 
+                                                                    value="<%= participant.formattedPhone || '' %>"
+                                                                >
+                                                            </div>
+                                                            <div class="col-md-6 mb-3">
+                                                                <label class="form-label">Date of Birth</label>
+                                                                <input type="date" class="form-control" name="dob" value="<%= participant.formattedDob || '' %>">
+                                                            </div>
+                                                            <div class="col-md-6 mb-3">
+                                                                <label class="form-label">City</label>
+                                                                <input type="text" class="form-control" name="city" value="<%= participant.participantcity %>">
+                                                            </div>
+                                                            <div class="col-md-3 mb-3">
+                                                                <label class="form-label">State</label>
+                                                                <input type="text" class="form-control" name="state" maxlength="2" value="<%= participant.participantstate %>">
+                                                            </div>
+                                                            <div class="col-md-3 mb-3">
+                                                                <label class="form-label">ZIP</label>
+                                                                <input type="text" class="form-control" name="zip" value="<%= participant.participantzip %>">
+                                                            </div>
+                                                            <div class="col-md-6 mb-3">
+                                                                <label class="form-label">Role</label>
+                                                                <select class="form-select" name="role">
+                                                                    <option value="participant" <%= participant.participantrole === 'participant' ? 'selected' : '' %>>Participant</option>
+                                                                    <option value="admin" <%= participant.participantrole === 'admin' ? 'selected' : '' %>>Admin</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-md-6 mb-3">
+                                                                <label class="form-label">School/Employer</label>
+                                                                <input type="text" class="form-control" name="school" value="<%= participant.participantschooloremployer %>">
+                                                            </div>
+                                                            <div class="col-md-6 mb-3">
+                                                                <label class="form-label">Field of Interest</label>
+                                                                <select class="form-select" name="field">
+                                                                    <option value="">Select...</option>
+                                                                    <option value="STEM" <%= participant.participantfieldofinterest === 'STEM' ? 'selected' : '' %>>STEM</option>
+                                                                    <option value="Arts" <%= participant.participantfieldofinterest === 'Arts' ? 'selected' : '' %>>Arts</option>
+                                                                    <option value="Both" <%= participant.participantfieldofinterest === 'Both' ? 'selected' : '' %>>Both</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div class="col-md-6 mb-3">
+                                                                <label class="form-label">Total Donations</label>
+                                                                <input type="number" step="0.01" class="form-control" name="totaldonations" value="<%= participant.totaldonations %>" readonly>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-success">Save Changes</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Participant Modal (unchanged) -->
+    <div class="modal fade" id="addParticipantModal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Participant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="/participants/add">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">First Name *</label>
+                                <input type="text" class="form-control" name="firstname" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" name="lastname" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email *</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phone</label>
+                                <input 
+                                    type="tel" 
+                                    class="form-control phone-input" 
+                                    name="phone" maxlength="14"
+                                >
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" name="dob">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">City</label>
+                                <input type="text" class="form-control" name="city">
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">State</label>
+                                <input type="text" class="form-control" maxlength="2" name="state">
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">ZIP</label>
+                                <input type="text" class="form-control" name="zip" maxlength="5">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Role</label>
+                                <select class="form-select" name="role">
+                                    <option value="participant" selected>Participant</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">School/Employer</label>
+                                <input type="text" class="form-control" name="school">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Field of Interest</label>
+                                <select class="form-select" name="field">
+                                    <option value="">Select...</option>
+                                    <option value="STEM">STEM</option>
+                                    <option value="Arts">Arts</option>
+                                    <option value="Both">Both</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Total Donations</label>
+                                <input type="number" step="0.01" class="form-control" name="totaldonations" value="0">
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Add Participant</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Search Script -->
+    <script>
+        const searchInput = document.getElementById('participantSearch');
+        const table = document.getElementById('participantsTable');
+        const rows = table.getElementsByTagName('tr');
+    
+        // Pre-fill search if query parameter exists
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchQuery = urlParams.get('search');
+        if (searchQuery) {
+            searchInput.value = searchQuery.toLowerCase();
+        }
+    
+        function filterTable() {
+            const filter = searchInput.value.toLowerCase();
+            for (let i = 1; i < rows.length; i++) { // skip header
+                const cells = rows[i].getElementsByTagName('td');
+                let match = false;
+    
+                // Loop through all columns
+                for (let j = 0; j < cells.length; j++) {
+                    if (cells[j] && cells[j].textContent.toLowerCase().includes(filter)) {
+                        match = true;
+                        break; // stop checking other cells for this row
+                    }
+                }
+    
+                rows[i].style.display = match ? '' : 'none';
+            }
+        }
+    
+        // Initial filter if search query exists
+        filterTable();
+    
+        // Live search
+        searchInput.addEventListener('keyup', filterTable);
+    </script>
+    <script>
+document.querySelectorAll(".phone-input").forEach(input => {
+    input.addEventListener("input", function (e) {
+        let digits = e.target.value.replace(/\D/g, "").substring(0, 10);
+
+        let formatted = digits;
+        if (digits.length > 6) {
+            formatted = `(${digits.substring(0,3)}) ${digits.substring(3,6)}-${digits.substring(6)}`;
+        } else if (digits.length > 3) {
+            formatted = `(${digits.substring(0,3)}) ${digits.substring(3)}`;
+        } else if (digits.length > 0) {
+            formatted = `(${digits}`;
+        }
+
+        e.target.value = formatted;
+    });
+});
+</script>
+
+    
+</body>
+</html>

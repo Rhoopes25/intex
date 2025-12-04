@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Survey - Ella Rises</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <%- include('partials/navbar') %>
+    <img src="/butterfly.jpg" alt="" class="floating-clipart butterfly-1">
+    <img src="/flower1.jpg" alt="" class="floating-clipart flower-top-right">
+    <img src="/flower2.jpg" alt="" class="floating-clipart flower-hero-left">
+    <img src="/flower3.jpg" alt="" class="floating-clipart flower-hero-right">
+    <img src="/butterfly.jpg" alt="" class="floating-clipart butterfly-2">
+
+    <div class="login-body">
+
+        <div class="container">
+            <div class="row justify-content-center">
+
+                <!-- SURVEY FORM CARD -->
+                <div class="col-12 col-md-10 col-lg-7 mb-5">
+                    <div class="login-card">
+                        <div class="login-header">
+                            <i class="fas fa-clipboard-check"></i>
+                            <h2>Event Survey</h2>
+                            <p class="mb-0">Tell us about your experience</p>
+                        </div>
+                        <div class="p-5">
+                            <% if (events.length === 0) { %>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    You have no past events to submit a survey for.
+                                </div>
+                            <% } else { %>
+
+                                <% if (error) { %>
+                                    <div class="alert alert-danger">
+                                        <i class="fas fa-exclamation-circle me-2"></i><%= error %>
+                                    </div>
+                                <% } %>
+
+                                <% if (success) { %>
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle me-2"></i><%= success %>
+                                    </div>
+                                <% } %>
+
+                                <form method="POST" action="/userSurveys/submit">
+                                    <!-- Event dropdown and scores here (same as before) -->
+                                    <div class="mb-4">
+                                        <label for="registrationid" class="form-label"><i class="fas fa-calendar-alt"></i> Event</label>
+                                        <select class="form-control" id="registrationid" name="registrationid" required>
+                                            <option value="">Select an event...</option>
+                                            <% events.forEach(event => { %>
+                                                <option value="<%= event.registrationid %>">
+                                                    <%= event.eventname %> — <%= new Date(event.eventdatetimestart).toLocaleDateString() %>
+                                                </option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+
+                                    <!-- Scores and comments -->
+                                    <div class="mb-4">
+                                        <label for="satisfactionscore" class="form-label"><i class="fas fa-star"></i> Satisfaction Score (1–5)</label>
+                                        <input type="number" class="form-control" min="1" max="5" id="satisfactionscore" name="satisfactionscore" required>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="usefulnessscore" class="form-label"><i class="fas fa-lightbulb"></i> Usefulness Score (1–5)</label>
+                                        <input type="number" class="form-control" min="1" max="5" id="usefulnessscore" name="usefulnessscore" required>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="instructorscore" class="form-label"><i class="fas fa-chalkboard-teacher"></i> Instructor Score (1–5)</label>
+                                        <input type="number" class="form-control" min="1" max="5" id="instructorscore" name="instructorscore" required>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="recommendationscore" class="form-label"><i class="fas fa-thumbs-up"></i> Recommendation Score (1–5)</label>
+                                        <input type="number" class="form-control" min="1" max="5" id="recommendationscore" name="recommendationscore" required>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="comments" class="form-label"><i class="fas fa-comment-dots"></i> Additional Comments</label>
+                                        <textarea class="form-control" id="comments" name="comments" rows="4" placeholder="Share any thoughts or suggestions..."></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary w-100 py-3"><i class="fas fa-paper-plane me-2"></i> Submit Survey</button>
+                                </form>
+
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div> <!-- end .login-body -->
+
+<!-- USER SURVEYS TABLE (MATCH surveys.ejs STYLE) -->
+<div class="container mb-5 mt-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10">
+
+            <div class="card shadow-sm rounded-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i>Your Submitted Surveys
+                    </h4>
+                </div>
+
+                <div class="card-body">
+
+                    <% if (!userSurveys || userSurveys.length === 0) { %>
+                        <div class="text-center py-5">
+                            <i class="fas fa-clipboard-list" style="font-size: 3.5rem; color: var(--text-light);"></i>
+                            <h5 class="mt-3">You haven’t submitted any surveys yet.</h5>
+                            <p class="text-muted">Submit feedback after attending events!</p>
+                        </div>
+                    <% } else { %>
+
+                        <!-- Search Bar -->
+                        <div class="mb-3">
+                            <input 
+                                type="text" 
+                                id="surveySearch" 
+                                class="form-control" 
+                                placeholder="Search by date or event..."
+                            >
+                        </div>
+
+                        <!-- Table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle" id="userSurveysTable">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Event</th>
+                                        <th>Satisfaction</th>
+                                        <th>Usefulness</th>
+                                        <th>Instructor</th>
+                                        <th>Recommendation</th>
+                                        <th>Overall</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% const getBadgeColor = score => score >= 4 ? '#98B59D' : score >= 3 ? '#ffc107' : '#dc3545'; %>
+
+                                    <% userSurveys.forEach(survey => { %>
+                                        <tr>
+                                            <td><%= new Date(survey.surveysubmissiondate).toLocaleDateString() %></td>
+                                            <td><%= survey.eventname %></td>
+
+                                            <td><span class="badge" style="background-color:<%= getBadgeColor(survey.surveysatisfactionscore) %>;">
+                                                <%= survey.surveysatisfactionscore %>/5
+                                            </span></td>
+
+                                            <td><span class="badge" style="background-color:<%= getBadgeColor(survey.surveyusefulnessscore) %>;">
+                                                <%= survey.surveyusefulnessscore %>/5
+                                            </span></td>
+
+                                            <td><span class="badge" style="background-color:<%= getBadgeColor(survey.surveyinstructorscore) %>;">
+                                                <%= survey.surveyinstructorscore %>/5
+                                            </span></td>
+
+                                            <td><span class="badge" style="background-color:<%= getBadgeColor(survey.surveyrecommendationscore) %>;">
+                                                <%= survey.surveyrecommendationscore %>/5
+                                            </span></td>
+
+                                            <td><strong><%= (parseFloat(survey.surveyoverallscore) || 0).toFixed(1) %>/5</strong></td>
+
+                                            <!-- ACTIONS -->
+                                            <td class="text-end">
+                                                <button class="btn btn-sm btn-primary"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#viewSurveyModal<%= survey.surveyid %>">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+
+                                                <form method="POST" 
+                                                      action="/userSurveys/delete/<%= survey.surveyid %>" 
+                                                      class="d-inline"
+                                                      onsubmit="return confirm('Delete this survey?');">
+                                                    <button class="btn btn-sm btn-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+
+                                        <!-- View Modal -->
+                                        <div class="modal fade" id="viewSurveyModal<%= survey.surveyid %>" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">
+                                                            Survey — <%= survey.eventname %>
+                                                        </h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+
+                                                    <div class="modal-body">
+                                                        <p><strong>Satisfaction:</strong> <%= survey.surveysatisfactionscore %>/5</p>
+                                                        <p><strong>Usefulness:</strong> <%= survey.surveyusefulnessscore %>/5</p>
+                                                        <p><strong>Instructor:</strong> <%= survey.surveyinstructorscore %>/5</p>
+                                                        <p><strong>Recommendation:</strong> <%= survey.surveyrecommendationscore %>/5</p>
+                                                        <p><strong>Overall:</strong> <%= (parseFloat(survey.surveyoverallscore) || 0).toFixed(1) %>/5</p>
+                                                        <p><strong>Comments:</strong> <%= survey.surveycomments || 'None' %></p>
+                                                    </div>
+
+                                                    <div class="modal-footer">
+                                                        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    <% } %>
+
+                </div> <!-- card-body -->
+            </div> <!-- card -->
+
+        </div>
+    </div>
+</div>
+
+ <!-- FOOTER -->
+ <%- include('partials/footer') %>
+
+<!-- SEARCH SCRIPT -->
+<script>
+    const searchInput = document.getElementById('surveySearch');
+    const table = document.getElementById('userSurveysTable');
+    const rows = table?.getElementsByTagName('tr') || [];
+
+    if (searchInput) {
+        searchInput.addEventListener('keyup', () => {
+            const filter = searchInput.value.toLowerCase();
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                let match = false;
+
+                // Search in Date + Event columns
+                for (let j = 0; j < 2; j++) {
+                    if (cells[j] && cells[j].textContent.toLowerCase().includes(filter)) {
+                        match = true;
+                    }
+                }
+
+                rows[i].style.display = match ? '' : 'none';
+            }
+        });
+    }
+</script>
+
+
+
+
+   
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const surveySearchInput = document.getElementById('surveySearch');
+        const surveysTable = document.getElementById('surveysTable');
+        const surveyRows = surveysTable ? surveysTable.getElementsByTagName('tr') : [];
+
+        if (surveySearchInput) {
+            surveySearchInput.addEventListener('keyup', () => {
+                const filter = surveySearchInput.value.toLowerCase();
+                for (let i = 1; i < surveyRows.length; i++) {
+                    const cells = surveyRows[i].getElementsByTagName('td');
+                    let match = false;
+                    for (let j = 0; j < 2; j++) { // search Date and Event
+                        if (cells[j] && cells[j].textContent.toLowerCase().includes(filter)) {
+                            match = true;
+                            break;
+                        }
+                    }
+                    surveyRows[i].style.display = match ? '' : 'none';
+                }
+            });
+        }
+
+        function deleteSurvey(surveyId) {
+            if (confirm('Are you sure you want to delete this survey?')) {
+                fetch(`/userSurveys/delete/${surveyId}`, { method: 'POST' })
+                    .then(() => window.location.reload())
+                    .catch(err => alert('Error deleting survey.'));
+            }
+        }
+    </script>
+</body>
+</html>

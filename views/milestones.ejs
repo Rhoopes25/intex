@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Milestones - Ella Rises</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<%- include('partials/navbar') %>
+
+<img src="/butterfly.jpg" alt="" class="floating-clipart butterfly-1">
+<img src="/flower2.jpg" alt="" class="floating-clipart flower-hero-left">
+<img src="/flower3.jpg" alt="" class="floating-clipart flower-hero-right">
+
+<div class="page-header">
+  <div class="container">
+    <h1><i class="fas fa-trophy me-3"></i>All Milestones</h1>
+    <p>View participant achievements</p>
+  </div>
+</div>
+
+<div class="container mb-5">
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="fas fa-list me-2"></i>Milestone Records</span>
+
+      <% if (isManager) { %>
+        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addMilestoneModal">
+          <i class="fas fa-plus me-2"></i>Add Milestone
+        </button>
+      <% } %>
+    </div>
+
+    <div class="card-body">
+
+      <!-- Server-side search -->
+      <form method="GET" action="/milestones" class="mb-3 d-flex gap-2">
+        <input type="text" name="search" class="form-control" placeholder="Search by participant, milestone, or date..." value="<%= search %>">
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+
+      <% if (milestones.length === 0) { %>
+        <div class="text-center py-5">
+          <i class="fas fa-trophy" style="font-size: 4rem; color: var(--text-light);"></i>
+          <h4 class="mt-3">No milestones recorded yet</h4>
+          <p class="text-muted">Milestones will appear here as participants achieve them</p>
+        </div>
+      <% } else { %>
+
+        <!-- Milestones Table -->
+        <div class="table-responsive">
+          <table class="table table-hover" id="milestonesTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Participant</th>
+                <th>Milestone</th>
+                <% if (isManager) { %><th>Actions</th><% } %>
+              </tr>
+            </thead>
+            <tbody>
+              <% milestones.forEach(milestone => { %>
+                <tr>
+                  <td><%= new Date(milestone.milestonedate).toLocaleDateString() %></td>
+                  <td><%= milestone.participantfirstname %> <%= milestone.participantlastname %></td>
+                  <td><%= milestone.milestonetitle %></td>
+                  <% if (isManager) { %>
+                    <td>
+                      <button class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#editMilestoneModal<%= milestone.milestoneid %>">
+                        <i class="fas fa-edit"></i> Edit
+                      </button>
+                      <form method="POST" action="/milestones/delete/<%= milestone.milestoneid %>" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this milestone?')">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </form>
+                    </td>
+                  <% } %>
+                </tr>
+
+                <% if (isManager) { %>
+                  <!-- Edit Milestone Modal -->
+                  <div class="modal fade" id="editMilestoneModal<%= milestone.milestoneid %>" tabindex="-1">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <form method="POST" action="/milestones/edit/<%= milestone.milestoneid %>">
+                          <div class="modal-header">
+                            <h5 class="modal-title">Edit Milestone</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                          </div>
+                          <div class="modal-body">
+                            <div class="mb-3">
+                              <label class="form-label">Participant</label>
+                              <select class="form-select" name="participantid" required>
+                                <% participants.forEach(p => { %>
+                                  <option value="<%= p.participantid %>" <%= p.participantid === milestone.participantid ? 'selected' : '' %>>
+                                    <%= p.participantfirstname %> <%= p.participantlastname %>
+                                  </option>
+                                <% }) %>
+                              </select>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label">Milestone Title</label>
+                              <input type="text" class="form-control" name="title" value="<%= milestone.milestonetitle %>" required>
+                            </div>
+                            <div class="mb-3">
+                              <label class="form-label">Date Achieved</label>
+                              <input type="date" class="form-control" name="date" value="<%= new Date(milestone.milestonedate).toISOString().split('T')[0] %>" required>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">Save Changes</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                <% } %>
+
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Load More -->
+        <% if (milestones.length === limit) { %>
+          <div class="text-center mt-3">
+            <form method="GET" action="/milestones">
+              <input type="hidden" name="offset" value="<%= offset + limit %>">
+              <input type="hidden" name="search" value="<%= search %>">
+              <button type="submit" class="btn btn-outline-primary">Load More</button>
+            </form>
+          </div>
+        <% } %>
+
+      <% } %>
+
+    </div>
+  </div>
+</div>
+
+<!-- Add Milestone Modal -->
+<% if (isManager) { %>
+  <div class="modal fade" id="addMilestoneModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="POST" action="/milestones/add">
+          <div class="modal-header">
+            <h5 class="modal-title">Add New Milestone</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Participant</label>
+              <select class="form-select" name="participantid" required>
+                <option value="">Select a participant...</option>
+                <% participants.forEach(p => { %>
+                  <option value="<%= p.participantid %>"><%= p.participantfirstname %> <%= p.participantlastname %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Milestone Title</label>
+              <input type="text" class="form-control" name="title" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Date Achieved</label>
+              <input type="date" class="form-control" name="date" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Add Milestone</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<%- include('partials/footer') %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

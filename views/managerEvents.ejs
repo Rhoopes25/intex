@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Events - Ella Rises</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('partials/navbar') %>
+
+    <% 
+    function toLocalDatetime(dt) { 
+        if (!dt) return '';
+        const d = new Date(dt);
+        const pad = n => n.toString().padStart(2,'0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } 
+    %>
+
+    <!-- Floating Clipart -->
+    <img src="/butterfly.jpg" alt="" class="floating-clipart butterfly-1">
+    <img src="/flower2.jpg" alt="" class="floating-clipart flower-hero-left">
+    <img src="/flower3.jpg" alt="" class="floating-clipart flower-hero-right">
+
+    <div class="page-header">
+        <div class="container">
+            <h1><i class="fas fa-calendar-check me-3"></i>Events</h1>
+            <p>Create, edit, or delete events</p>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-list me-2"></i>Event Records</span>
+
+                <% if (isManager) { %>
+                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addEventModal">
+                        <i class="fas fa-plus me-2"></i>Add Event
+                    </button>
+                <% } %>
+            </div>
+
+            <div class="card-body">
+                <% if (events.length === 0) { %>
+                    <div class="text-center py-5">
+                        <i class="fas fa-calendar-check" style="font-size: 4rem; color: var(--text-light);"></i>
+                        <h4 class="mt-3">No events scheduled yet</h4>
+                        <p class="text-muted">Events will appear here as they are added</p>
+                    </div>
+                <% } else { %>
+
+                    <!-- Search Bar -->
+                    <div class="mb-3">
+                        <input type="text" id="eventSearch" class="form-control" placeholder="Search events...">
+                    </div>
+
+                    <% if (typeof success !== 'undefined') { %>
+                        <div class="container mt-3">
+                            <% if (success === 'added') { %>
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    Event added successfully!
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            <% } else if (success === 'edited') { %>
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    Event updated successfully!
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            <% } else if (success === 'deleted') { %>
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    Event deleted successfully!
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% } %>
+
+                    <!-- Events Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="eventsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Location</th>
+                                    <th>Capacity</th>
+                                    <th>Registration Deadline</th>
+                                    <% if (isManager) { %><th>Actions</th><% } %>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% events.forEach(event => { %>
+                                    <tr>
+                                        <td><%= event.eventname %></td>
+                                        <td><%= new Date(event.eventdatetimestart).toLocaleString() %></td>
+                                        <td><%= new Date(event.eventdatetimeend).toLocaleString() %></td>
+                                        <td><%= event.eventlocation || 'TBA' %></td>
+                                        <td><%= event.eventcapacity %></td>
+                                        <td><%= event.eventregistrationdeadline ? new Date(event.eventregistrationdeadline).toLocaleString() : 'N/A' %></td>
+                                        <% if (isManager) { %>
+                                            <td>
+                                                <div class="d-flex gap-2">
+                                                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editEventModal<%= event.occurrenceid %>">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <form method="POST" action="/managerEvents/delete/<%= event.occurrenceid %>">
+                                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this event?')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        <% } %>
+                                    </tr>
+
+                                    <!-- Edit Event Modal -->
+                                    <% if (isManager) { %>
+                                        <div class="modal fade" id="editEventModal<%= event.occurrenceid %>" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Edit Event</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+
+                                                    <form method="POST" action="/managerEvents/edit/<%= event.occurrenceid %>">
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Event Name</label>
+                                                                <input type="text" class="form-control" name="eventname" value="<%= event.eventname %>" required>
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Start Date & Time</label>
+                                                                <input type="datetime-local" class="form-control" name="eventdatetimestart" value="<%= toLocalDatetime(event.eventdatetimestart) %>" required>
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">End Date & Time</label>
+                                                                <input type="datetime-local" class="form-control" name="eventdatetimeend" value="<%= toLocalDatetime(event.eventdatetimeend) %>" required>
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Location</label>
+                                                                <input type="text" class="form-control" name="eventlocation" value="<%= event.eventlocation %>">
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Capacity</label>
+                                                                <input type="number" class="form-control" name="eventcapacity" value="<%= event.eventcapacity %>">
+                                                            </div>
+
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Registration Deadline</label>
+                                                                <input type="datetime-local" class="form-control" name="eventregistrationdeadline" value="<%= toLocalDatetime(event.eventregistrationdeadline) %>">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-success">Save Changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% } %>
+
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Event Modal -->
+    <% if (isManager) { %>
+        <div class="modal fade" id="addEventModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Event</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <form method="POST" action="/managerEvents/add">
+                        <div class="modal-body">
+                            <!-- Template Select -->
+                            <div class="mb-3">
+                                <label class="form-label">Event Template</label>
+                                <select id="templateSelect" class="form-select" name="templateid" required>
+                                    <option value="">Select a template...</option>
+                                    <% templates.forEach(template => { %>
+                                        <option value="<%= template.templateid %>" 
+                                            data-name="<%= template.eventname %>" 
+                                            data-defaultcapacity="<%= template.eventdefaultcapacity %>">
+                                            <%= template.eventname %>
+                                        </option>
+                                    <% }) %>
+                                </select>
+                            </div>
+
+                            <!-- Event Name (readonly, filled from template) -->
+                            <div class="mb-3">
+                                <label class="form-label">Event Name</label>
+                                <input type="text" id="eventNameInput" class="form-control" name="eventname" readonly required>
+                            </div>
+
+                            <!-- Start/End Date -->
+                            <div class="mb-3">
+                                <label class="form-label">Start Date & Time</label>
+                                <input type="datetime-local" class="form-control" name="eventdatetimestart" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">End Date & Time</label>
+                                <input type="datetime-local" class="form-control" name="eventdatetimeend" required>
+                            </div>
+
+                            <!-- Location -->
+                            <div class="mb-3">
+                                <label class="form-label">Location</label>
+                                <input type="text" class="form-control" name="eventlocation">
+                            </div>
+
+                            <!-- Capacity -->
+                            <div class="mb-3">
+                                <label class="form-label">Capacity</label>
+                                <input type="number" id="eventCapacityInput" class="form-control" name="eventcapacity" required>
+                            </div>
+
+                            <!-- Registration Deadline -->
+                            <div class="mb-3">
+                                <label class="form-label">Registration Deadline</label>
+                                <input type="datetime-local" class="form-control" name="eventregistrationdeadline">
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">Add Event</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        const templateSelect = document.getElementById('templateSelect');
+        const eventNameInput = document.getElementById('eventNameInput');
+        const eventCapacityInput = document.getElementById('eventCapacityInput');
+
+        templateSelect.addEventListener('change', () => {
+            const selectedOption = templateSelect.selectedOptions[0];
+            if (selectedOption) {
+                eventNameInput.value = selectedOption.dataset.name || '';
+                eventCapacityInput.value = selectedOption.dataset.defaultcapacity || 30;
+            } else {
+                eventNameInput.value = '';
+                eventCapacityInput.value = 30;
+            }
+        });
+        </script>
+    <% } %>
+
+    <%- include('partials/footer') %>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Search Events
+        const searchInput = document.getElementById('eventSearch');
+        const table = document.getElementById('eventsTable');
+        const rows = table.getElementsByTagName('tr');
+
+        searchInput?.addEventListener('keyup', () => {
+            const filter = searchInput.value.toLowerCase();
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                let match = false;
+                const maxIndex = Math.min(cells.length, 6);
+                for (let j = 0; j < maxIndex; j++) {
+                    if (cells[j] && cells[j].textContent.toLowerCase().includes(filter)) {
+                        match = true;
+                        break;
+                    }
+                }
+                rows[i].style.display = match ? '' : 'none';
+            }
+        });
+    </script>
+</body>
+</html>
