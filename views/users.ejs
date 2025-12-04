@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users - Ella Rises</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <img src="/butterfly.jpg" alt="" class="floating-clipart butterfly-1">
+    <img src="/flower2.jpg" alt="" class="floating-clipart flower-hero-left">
+    <img src="/flower3.jpg" alt="" class="floating-clipart flower-hero-right">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div class="container">
+            <h1><i class="fas fa-users me-3"></i>Users</h1>
+            <p>Manage all users and roles</p>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-list me-2"></i>All Users</span>
+                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="fas fa-plus me-2"></i>Add User
+                </button>
+            </div>
+            <div class="card-body">
+
+                <% if (!users || users.length === 0) { %>
+                    <div class="text-center py-5">
+                        <i class="fas fa-users" style="font-size: 4rem; color: var(--text-light);"></i>
+                        <h4 class="mt-3">No users yet</h4>
+                        <p class="text-muted">Users will appear here as they are added</p>
+                    </div>
+                <% } else { %>
+
+                    <!-- Search Bar -->
+                    <div class="mb-3">
+                        <input type="text" id="userSearch" class="form-control" placeholder="Search users...">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Total Donations</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% users.forEach(user => { %>
+                                    <tr>
+                                        <td>
+                                            <% if(user.participantid) { %>
+                                                <a href="/participants?search=<%= encodeURIComponent(user.useremail) %>" class="text-decoration-none">
+                                                    <%= user.participantfirstname %> <%= user.participantlastname %>
+                                                </a>
+                                            <% } else { %>
+                                                <%= user.username %>
+                                            <% } %>
+                                        </td>
+                                        <td><%= user.useremail %></td>
+                                        <td><%= user.userrole === 'M' ? 'Manager' : 'User' %></td>
+                                        <td>$<%= parseFloat(user.totaldonations || 0).toFixed(2) %></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-2" onclick='editUser(<%- JSON.stringify(user) %>)'>
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <form method="POST" action="/users/delete/<%= user.userid %>" style="display:inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure? This will delete all associated data.')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD USER MODAL -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="/users/add">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">First Name *</label>
+                                <input type="text" class="form-control" name="firstname" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" name="lastname" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email *</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Username *</label>
+                                <input type="text" class="form-control" name="username" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Password *</label>
+                                <input type="password" class="form-control" name="password" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Role</label>
+                                <select class="form-select" name="role">
+                                    <option value="User">User</option>
+                                    <option value="Manager">Manager</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Add User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT USER MODAL -->
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <form method="POST" action="/users/edit" class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="userid" id="editUserID">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">First Name *</label>
+                            <input type="text" class="form-control" id="editFirstName" name="firstname" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Last Name *</label>
+                            <input type="text" class="form-control" id="editLastName" name="lastname" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="editEmail" name="email" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Username *</label>
+                            <input type="text" class="form-control" id="editUsername" name="username" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" id="editRole" name="role">
+                                <option value="User">User</option>
+                                <option value="Manager">Manager</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function editUser(user) {
+            document.getElementById("editUserID").value = user.userid;
+            document.getElementById("editFirstName").value = user.participantfirstname || user.username;
+            document.getElementById("editLastName").value = user.participantlastname || '';
+            document.getElementById("editUsername").value = user.username || '';
+            document.getElementById("editEmail").value = user.useremail;
+            document.getElementById("editRole").value = user.userrole === 'M' ? 'Manager' : 'User';
+
+            new bootstrap.Modal(document.getElementById("editUserModal")).show();
+        }
+
+        // User Search Script
+        const searchInput = document.getElementById('userSearch');
+        const table = document.getElementById('usersTable');
+        const rows = table.getElementsByTagName('tr');
+
+        searchInput.addEventListener('keyup', function() {
+            const filter = searchInput.value.toLowerCase();
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                let match = false;
+                [0, 1, 2].forEach(index => { // Name, Email, Role
+                    if (cells[index] && cells[index].textContent.toLowerCase().includes(filter)) {
+                        match = true;
+                    }
+                });
+                rows[i].style.display = match ? '' : 'none';
+            }
+        });
+    </script>
+</body>
+</html>

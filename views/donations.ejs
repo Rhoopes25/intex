@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donations - Ella Rises</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('partials/navbar') %>
+    <img src="/butterfly.jpg" alt="" class="floating-clipart butterfly-1">
+    <img src="/flower1.jpg" alt="" class="floating-clipart flower-top-right">
+    <img src="/flower2.jpg" alt="" class="floating-clipart flower-hero-left">
+    <img src="/flower3.jpg" alt="" class="floating-clipart flower-hero-right">
+    <img src="/butterfly.jpg" alt="" class="floating-clipart butterfly-2">
+    
+    <div class="page-header">
+        <div class="container">
+            <div>
+                <h1><i class="fas fa-hand-holding-heart me-3"></i>Donations</h1>
+                <p>Thank you for supporting our mission</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>All Donations</h3>
+            <a href="/donate" class="btn btn-sm btn-primary ms-3">
+                <i class="fas fa-plus me-1"></i>Add Donation
+            </a>
+        </div>
+        
+        <div class="card">
+            <div class="card-body p-4">
+
+                <% if (donations.length === 0) { %>
+                    <div class="text-center py-5">
+                        <i class="fas fa-heart" style="font-size: 4rem; color: var(--text-light);"></i>
+                        <h3 class="mt-3">No donations yet</h3>
+                        <p>Be the first to support our mission!</p>
+                        <a href="/donate" class="btn btn-primary mt-3">
+                            <i class="fas fa-heart me-2"></i>Make a Donation
+                        </a>
+                    </div>
+                <% } else { %>
+
+                    <!-- SEARCH BAR (like Events page) -->
+                    <div class="mb-3">
+                        <input type="text" id="donationSearch" class="form-control" placeholder="Search donations...">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="donationsTable">
+                            <thead>
+                                <tr>
+                                    <th>Donor Name</th>
+                                    <th>Date</th>
+                                    <% if (isManager) { %>
+                                        <th>Amount</th>
+                                        <th>Actions</th>
+                                    <% } %>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% donations.forEach(donation => { %>
+                                    <tr>
+                                        <td><%= donation.participantfirstname %> <%= donation.participantlastname %></td>
+                                        <td><%= new Date(donation.donationdate).toLocaleDateString() %></td>
+                                        <% if (isManager) { %>
+                                            <td>$<%= parseFloat(donation.donationamount).toFixed(2) %></td>
+                                            <td>
+                                                <!-- Edit Donation -->
+                                                <button class="btn btn-sm btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#editDonationModal<%= donation.donationid %>">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+
+                                                <!-- Delete Donation -->
+                                                <button class="btn btn-sm btn-outline-danger" onclick="if(confirm('Delete this donation?')) { document.getElementById('delete-<%= donation.donationid %>').submit(); }">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                <form id="delete-<%= donation.donationid %>" method="POST" action="/donations/delete/<%= donation.donationid %>" style="display:none;"></form>
+
+                                                <!-- Edit Donation Modal -->
+                                                <div class="modal fade" id="editDonationModal<%= donation.donationid %>" tabindex="-1">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title">Edit Donation</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <form method="POST" action="/donations/edit/<%= donation.donationid %>">
+                                                                <div class="modal-body">
+                                                                    <div class="mb-3">
+                                                                        <label for="donor<%= donation.donationid %>" class="form-label">Donor</label>
+                                                                        <input type="text" class="form-control" id="donor<%= donation.donationid %>" name="donor" value="<%= donation.participantfirstname %> <%= donation.participantlastname %>" required>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label for="amount<%= donation.donationid %>" class="form-label">Amount</label>
+                                                                        <input type="number" step="0.01" class="form-control" id="amount<%= donation.donationid %>" name="amount" value="<%= donation.donationamount %>" required>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label for="date<%= donation.donationid %>" class="form-label">Date</label>
+                                                                        <input type="date" class="form-control" id="date<%= donation.donationid %>" name="date" value="<%= new Date(donation.donationdate).toISOString().split('T')[0] %>" required>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                                    <button type="submit" class="btn btn-success">Save Changes</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        <% } %>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Simple live-search script (same pattern as your Events page) -->
+    <script>
+        const searchInput = document.getElementById('donationSearch');
+        const table = document.getElementById('donationsTable');
+        const rows = table.getElementsByTagName('tr');
+
+        searchInput?.addEventListener('keyup', () => {
+            const filter = searchInput.value.toLowerCase();
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                let match = false;
+                // check every visible cell in the row
+                for (let j = 0; j < cells.length; j++) {
+                    if (cells[j] && cells[j].textContent.toLowerCase().includes(filter)) {
+                        match = true;
+                        break;
+                    }
+                }
+                rows[i].style.display = match ? '' : 'none';
+            }
+        });
+    </script>
+</body>
+</html>
