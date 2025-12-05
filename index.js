@@ -37,6 +37,7 @@ const knex = require("knex")({
 
 
 // ROUTES
+// gets content for test page
 app.get("/test", async(req, res) => {
     try {
         const rows = await db.select("*").from("test_table");
@@ -47,13 +48,14 @@ app.get("/test", async(req, res) => {
     }
 });
 
+// gets content for teapot display
 app.get("/teapot", (req, res) => {
     res.status(418).render("teapot"); // render an EJS template
 });
 
 // Middleware to pass user to all views
 app.use((req, res, next) => {
-    res.locals.user = req.session.userId ? {
+    res.locals.user = req.session.userId ? { //does userid exist
         id: req.session.userId,
         email: req.session.userEmail,
         role: req.session.userRole,
@@ -65,15 +67,16 @@ app.use((req, res, next) => {
 
 // Middleware to require login
 const requireLogin = (req, res, next) => {
+    // if the user id exists
     if (!req.session.userId) {
 
         // Capture the page they were trying to access
         const returnTo = encodeURIComponent(req.originalUrl);
-
+        // go back to login page
         return res.redirect(`/login?returnTo=${returnTo}`);
     }
 
-    // Attach the logged-in user from database
+    // connection to the db
     knex("users")
         .where({ userid: req.session.userId })
         .first()
@@ -81,7 +84,7 @@ const requireLogin = (req, res, next) => {
             if (!user) {
                 return res.redirect("/login");
             }
-            // Attach a cleaned-up user object
+            // Clean up the user object
             req.user = {
                 id: user.userid,
                 email: user.useremail,
@@ -131,9 +134,9 @@ app.post("/login", (req, res) => {
         .first()
         .then((user) => {
             if (!user || user.userpassword !== password) {
-                return res.render("login", { 
+                return res.render("login", {
                     error: "Invalid email or password",
-                    returnTo    // <-- include returnTo
+                    returnTo // <-- include returnTo
                 });
             }
 
@@ -149,9 +152,9 @@ app.post("/login", (req, res) => {
         })
         .catch((err) => {
             console.error("Login error:", err);
-            res.render("login", { 
+            res.render("login", {
                 error: "Login failed. Please try again.",
-                returnTo   // <-- include returnTo
+                returnTo // <-- include returnTo
             });
         });
 });
@@ -169,23 +172,34 @@ app.get("/createProfile", (req, res) => {
     res.render("createProfile", { error: null, returnTo });
 });
 
+// when user hits create button this is called
 app.post("/createProfile", (req, res) => {
     let {
-        email, password, username, firstname, lastname,
-        dob, phone, city, state, zip, school, field
+        email,
+        password,
+        username,
+        firstname,
+        lastname,
+        dob,
+        phone,
+        city,
+        state,
+        zip,
+        school,
+        field
     } = req.body;
 
     phone = phone ? phone.replace(/\D/g, "").slice(0, 10) : null;
     const returnTo = req.query.returnTo || req.body.returnTo || "/";
 
     if (!email || !password || !username || !firstname || !lastname) {
-        return res.render("createProfile", { 
-            error: "All required fields must be filled", 
-            returnTo 
+        return res.render("createProfile", {
+            error: "All required fields must be filled",
+            returnTo
         });
     }
 
-    // Step 1: check if user already exists
+    // if user already exists
     knex("users")
         .where({ useremail: email.toLowerCase() })
         .orWhere({ username: username })
@@ -195,7 +209,7 @@ app.post("/createProfile", (req, res) => {
                 throw new Error("Email or username already exists");
             }
 
-            // Step 2: check if participant exists
+            // if participant exists
             return knex("participants")
                 .where({ participantemail: email.toLowerCase() })
                 .first();
@@ -263,9 +277,9 @@ app.post("/createProfile", (req, res) => {
         })
         .catch(err => {
             console.error("Create profile error:", err);
-            res.render("createProfile", { 
-                error: err.message || "Failed to create profile. Please try again.", 
-                returnTo 
+            res.render("createProfile", {
+                error: err.message || "Failed to create profile. Please try again.",
+                returnTo
             });
         });
 });
@@ -273,7 +287,7 @@ app.post("/createProfile", (req, res) => {
 //DASHBOARD PAGE
 app.get('/dashboard', (req, res) => {
     res.render('dashboard'); // matches views/dashboard.ejs
-  });
+});
 
 // EVENTS PAGE
 app.get("/events", (req, res) => {
@@ -424,24 +438,24 @@ app.get("/profile", requireLogin, (req, res) => {
         .then((participant) => {
 
             // Step 2: Fetch registered events (if participant exists)
-            const eventsQuery = participant
-                ? knex("registrations")
-                      .select(
-                          "registrations.registrationid",
-                          "eventoccurrences.*",
-                          "eventtemplates.eventname",
-                          "registrations.registrationstatus"
-                      )
-                      .join("eventoccurrences", "registrations.eventoccurrenceid", "eventoccurrences.occurrenceid")
-                      .leftJoin("eventtemplates", "eventoccurrences.templateid", "eventtemplates.templateid")
-                      .where("registrations.participantid", participant.participantid)
-                      .orderBy("eventoccurrences.eventdatetimestart", "desc")
-                : Promise.resolve([]);
+            const eventsQuery = participant ?
+                knex("registrations")
+                .select(
+                    "registrations.registrationid",
+                    "eventoccurrences.*",
+                    "eventtemplates.eventname",
+                    "registrations.registrationstatus"
+                )
+                .join("eventoccurrences", "registrations.eventoccurrenceid", "eventoccurrences.occurrenceid")
+                .leftJoin("eventtemplates", "eventoccurrences.templateid", "eventtemplates.templateid")
+                .where("registrations.participantid", participant.participantid)
+                .orderBy("eventoccurrences.eventdatetimestart", "desc") :
+                Promise.resolve([]);
 
             eventsQuery
                 .then((events) => {
                     res.render("profile", {
-                        user: req.user,  // <-- Use req.user so role check works
+                        user: req.user, // <-- Use req.user so role check works
                         participant,
                         events,
                         profileSuccess: req.query.profileSuccess || null,
@@ -858,9 +872,9 @@ app.get("/userSurveys", requireLogin, (req, res) => {
                         .andWhere("eventoccurrences.eventdatetimeend", "<", new Date())
                         .whereNotIn("registrations.registrationid", submittedRegistrationIds)
                         .then((events) => {
-                            const errorMsg = events.length === 0 && userSurveys.length === 0
-                                ? "You have no past events to submit a survey for."
-                                : null;
+                            const errorMsg = events.length === 0 && userSurveys.length === 0 ?
+                                "You have no past events to submit a survey for." :
+                                null;
                             const successMsg = req.session.success || null;
                             req.session.success = null; // clear after rendering
 
@@ -964,7 +978,7 @@ app.get("/userMilestones", requireLogin, (req, res) => {
                 return res.render("userMilestones", {
                     success: null,
                     error: "Participant not found.",
-                    userMilestones: []  // prevent EJS crash
+                    userMilestones: [] // prevent EJS crash
                 });
             }
 
@@ -976,7 +990,7 @@ app.get("/userMilestones", requireLogin, (req, res) => {
             res.render("userMilestones", {
                 success: req.query.success || null,
                 error: req.query.error || null,
-                userMilestones: userMilestones || []  // always send array
+                userMilestones: userMilestones || [] // always send array
             });
         })
         .catch(err => {
@@ -984,7 +998,7 @@ app.get("/userMilestones", requireLogin, (req, res) => {
             res.render("userMilestones", {
                 success: null,
                 error: "Failed to load milestones.",
-                userMilestones: []   // prevent EJS crash
+                userMilestones: [] // prevent EJS crash
             });
         });
 });
@@ -1046,13 +1060,13 @@ app.get("/participants", requireManager, (req, res) => {
         .then(participants => {
 
             const formattedParticipants = participants.map(p => {
-                const dob = p.participantdob
-                    ? new Date(p.participantdob).toISOString().split("T")[0]
-                    : "";
+                const dob = p.participantdob ?
+                    new Date(p.participantdob).toISOString().split("T")[0] :
+                    "";
 
-                const phone = p.participantphone && p.participantphone.length === 10
-                    ? `(${p.participantphone.slice(0,3)}) ${p.participantphone.slice(3,6)}-${p.participantphone.slice(6)}`
-                    : p.participantphone;
+                const phone = p.participantphone && p.participantphone.length === 10 ?
+                    `(${p.participantphone.slice(0,3)}) ${p.participantphone.slice(3,6)}-${p.participantphone.slice(6)}` :
+                    p.participantphone;
 
                 return {
                     ...p,
@@ -1074,7 +1088,7 @@ app.get("/participants", requireManager, (req, res) => {
 });
 
 // add participant
-app.post("/participants/add", requireManager, async (req, res) => {
+app.post("/participants/add", requireManager, async(req, res) => {
     let { firstname, lastname, email, dob, phone, city, state, zip, school, field, role } = req.body;
 
     if (phone) phone = phone.replace(/\D/g, "");
@@ -1122,7 +1136,7 @@ app.post("/participants/add", requireManager, async (req, res) => {
 
 
 // MANAGER - UPDATE PARTICIPANT
-app.post("/participants/edit/:id", requireManager, async (req, res) => {
+app.post("/participants/edit/:id", requireManager, async(req, res) => {
     const participantId = req.params.id;
     const { firstname, lastname, email, phone, dob, city, state, zip, school, field, totaldonations, role } = req.body;
 
@@ -1199,48 +1213,48 @@ app.get("/registrations", requireManager, (req, res) => {
     }
 
     query.then(registrations => {
-        // Format check-in time for <input type="datetime-local">
-        const formatted = registrations.map(r => {
-            return {
-                ...r,
-                formattedCheckIn: r.registrationcheckintime
-                    ? new Date(r.registrationcheckintime).toISOString().slice(0, 16)
-                    : ""
-            };
-        });
-
-        // Get participants for Add Modal
-        knex("participants")
-            .orderBy("participantlastname")
-            .then(participants => {
-                // Get events for Add Modal
-                knex("eventoccurrences")
-                    .orderBy("eventdatetimestart", "desc")
-                    .then(events => {
-                        res.render("registrations", {
-                            registrations: formatted,
-                            participants,
-                            events,
-                            offset,
-                            limit,
-                            search,
-                            success: req.query.success || null
-                        });
-                    });
+            // Format check-in time for <input type="datetime-local">
+            const formatted = registrations.map(r => {
+                return {
+                    ...r,
+                    formattedCheckIn: r.registrationcheckintime ?
+                        new Date(r.registrationcheckintime).toISOString().slice(0, 16) :
+                        ""
+                };
             });
-    })
-    .catch(err => {
-        console.error("Registrations fetch error:", err);
-        res.render("registrations", { 
-            registrations: [],
-            participants: [],
-            events: [],
-            offset: 0,
-            limit,
-            search: "",
-            success: null
+
+            // Get participants for Add Modal
+            knex("participants")
+                .orderBy("participantlastname")
+                .then(participants => {
+                    // Get events for Add Modal
+                    knex("eventoccurrences")
+                        .orderBy("eventdatetimestart", "desc")
+                        .then(events => {
+                            res.render("registrations", {
+                                registrations: formatted,
+                                participants,
+                                events,
+                                offset,
+                                limit,
+                                search,
+                                success: req.query.success || null
+                            });
+                        });
+                });
+        })
+        .catch(err => {
+            console.error("Registrations fetch error:", err);
+            res.render("registrations", {
+                registrations: [],
+                participants: [],
+                events: [],
+                offset: 0,
+                limit,
+                search: "",
+                success: null
+            });
         });
-    });
 });
 
 
@@ -1274,8 +1288,7 @@ app.post("/registrations/edit/:id", requireManager, (req, res) => {
         .where({ registrationid: id })
         .update({
             registrationstatus: status || null,
-            registrationattendedflag:
-                attendedflag === "" ? null : attendedflag === "true",
+            registrationattendedflag: attendedflag === "" ? null : attendedflag === "true",
             registrationcheckintime: checkin || null
         })
         .then(() => {
@@ -1334,34 +1347,34 @@ app.get("/surveys", requireManager, (req, res) => {
     }
 
     query.then(surveys => {
-        // Fetch registrations for Add Survey dropdown
-        knex("registrations")
-            .select(
-                "registrations.registrationid",
-                "participants.participantfirstname",
-                "participants.participantlastname",
-                "eventoccurrences.eventname"
-            )
-            .join("participants", "registrations.participantid", "participants.participantid")
-            .leftJoin("eventoccurrences", "registrations.eventoccurrenceid", "eventoccurrences.occurrenceid")
-            .then(registrations => {
-                res.render("surveys", {
-                    surveys,
-                    registrations,
-                    offset,
-                    limit,
-                    search
+            // Fetch registrations for Add Survey dropdown
+            knex("registrations")
+                .select(
+                    "registrations.registrationid",
+                    "participants.participantfirstname",
+                    "participants.participantlastname",
+                    "eventoccurrences.eventname"
+                )
+                .join("participants", "registrations.participantid", "participants.participantid")
+                .leftJoin("eventoccurrences", "registrations.eventoccurrenceid", "eventoccurrences.occurrenceid")
+                .then(registrations => {
+                    res.render("surveys", {
+                        surveys,
+                        registrations,
+                        offset,
+                        limit,
+                        search
+                    });
+                })
+                .catch(err => {
+                    console.error("Registrations fetch error:", err);
+                    res.render("surveys", { surveys, registrations: [], offset, limit, search });
                 });
-            })
-            .catch(err => {
-                console.error("Registrations fetch error:", err);
-                res.render("surveys", { surveys, registrations: [], offset, limit, search });
-            });
-    })
-    .catch(err => {
-        console.error("Surveys fetch error:", err);
-        res.render("surveys", { surveys: [], registrations: [], offset: 0, limit, search: "" });
-    });
+        })
+        .catch(err => {
+            console.error("Surveys fetch error:", err);
+            res.render("surveys", { surveys: [], registrations: [], offset: 0, limit, search: "" });
+        });
 });
 
 
@@ -1458,7 +1471,7 @@ app.get("/milestones", requireLogin, (req, res) => {
         .offset(offset);
 
     if (search) {
-        query = query.where(function () {
+        query = query.where(function() {
             this.where("participants.participantfirstname", "ilike", `%${search}%`)
                 .orWhere("participants.participantlastname", "ilike", `%${search}%`)
                 .orWhere("milestones.milestonetitle", "ilike", `%${search}%`)
@@ -1704,7 +1717,7 @@ app.get("/users", requireManager, (req, res) => {
             if (search) {
                 query.where((qb) => {
                     qb.where("users.useremail", "ilike", `%${search}%`)
-                      .orWhere("users.username", "ilike", `%${search}%`);
+                        .orWhere("users.username", "ilike", `%${search}%`);
                 });
             }
         })
@@ -1757,7 +1770,7 @@ app.post("/users/add", requireManager, (req, res) => {
             userlastname: lastname,
             username: username,
             useremail: email,
-            userpassword: password,  // plain text
+            userpassword: password, // plain text
             userrole: dbRole
         })
         .then(() => {
@@ -1872,4 +1885,3 @@ const PORT = Number(process.env.PORT) || 3000;
 app.listen(PORT, () => {
     console.log(`Ella Rises server running on port ${PORT}`);
 });
-
