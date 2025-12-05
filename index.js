@@ -427,7 +427,6 @@ app.post("/eventRegister/:id", requireLogin, (req, res) => {
 });
 
 // PROFILE PAGE
-// PROFILE PAGE
 app.get("/profile", requireLogin, (req, res) => {
     const userEmail = req.session.userEmail;
 
@@ -607,9 +606,7 @@ app.post("/profile/update-password", requireLogin, (req, res) => {
         });
 });
 
-// =========================
 // Delete Account
-// =========================
 app.post("/profile/delete", requireLogin, (req, res) => {
     const userId = req.session.userId;
 
@@ -626,9 +623,7 @@ app.post("/profile/delete", requireLogin, (req, res) => {
         });
 });
 
-// =========================
 // Unregister from Event
-// =========================
 app.post("/profile/unregister/:registrationId", requireLogin, (req, res) => {
     const registrationId = req.params.registrationId;
 
@@ -1218,8 +1213,7 @@ app.get("/registrations", requireManager, (req, res) => {
                 return {
                     ...r,
                     formattedCheckIn: r.registrationcheckintime ?
-                        new Date(r.registrationcheckintime).toISOString().slice(0, 16) :
-                        ""
+                        new Date(r.registrationcheckintime).toISOString().slice(0, 16) : ""
                 };
             });
 
